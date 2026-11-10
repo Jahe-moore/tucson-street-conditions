@@ -38,7 +38,8 @@ stg.*          raw rows, bulk copied (SqlBulkCopy)
 core.*         one row per segment, keyed on the city's Cartegraph asset ID; condition_history; moratorium
    |  dq.usp_run_checks  10 checks, 'error' fails the run
    v
-rpt.*          star schema + ready-made views  ->  Power BI (row-level security)   +   ArcGIS Online map
+rpt.*          star schema + ready-made views  ->  Power BI report (row-level security)
+                                                   ArcGIS street map reads the city's layers live (site/map.html)
 etl.run_log    one row per layer per run: rows read / new / changed / unchanged, status, error
 ```
 
@@ -61,7 +62,22 @@ Needs SQL Server Express (`localhost\SQLEXPRESS`) and Windows PowerShell 5.1.
 Invoke-Pester .\tests                          # 16 tests; builds and drops a throwaway database
 .\etl\Register-Task.ps1                        # schedule it (optional)
 ```
-Then build the report with [powerbi/BUILD.md](powerbi/BUILD.md) and the map with [arcgis/BUILD.md](arcgis/BUILD.md).
+
+## The report and the map
+| | Open it | Detail |
+|---|---|---|
+| Power BI report | `powerbi\Tucson Street Conditions.pbip` in Power BI Desktop. It opens empty: **Home > Refresh**, Windows credentials, OK to connect unencrypted (local only) | Three pages (ward scorecard, worst first, data health) and four roles. Written by `python powerbi\tools\build_pbip.py`; see [powerbi/BUILD.md](powerbi/BUILD.md) |
+| Street map | `site\map.html` in any browser | ArcGIS Maps SDK for JavaScript on the city's live layers, Arcade condition bands, pop-ups, ward filter; see [arcgis/BUILD.md](arcgis/BUILD.md) |
+
+| Ward scorecard | Viewed as the Ward 3 role |
+|---|---|
+| ![Ward scorecard](site/img/report-scorecard.jpg) | ![Ward 3 view](site/img/report-ward3.jpg) |
+| **Worst first** | **Data health** |
+| ![Worst first](site/img/report-worst.jpg) | ![Data health](site/img/report-health.jpg) |
+| **Street map** | **One ward, one street** |
+| ![Street map](site/img/map-city.jpg) | ![Ward 3 map with pop-up](site/img/map-ward3.jpg) |
+
+View as Ward 3 shows 67.5 average, 39.3% poor or worse, 241 miles and 17 under moratorium, the same as `rpt.v_ward_summary`.
 
 ## Analyst documents
 | Document | What it is |
@@ -77,10 +93,10 @@ Then build the report with [powerbi/BUILD.md](powerbi/BUILD.md) and the map with
 etl/      StreetData.psm1 (functions), Load-StreetData.ps1, Install-Database.ps1, Register-Task.ps1
 sql/      01 schema, 02 merge procedures, 03 reporting views, 04 quality checks, 05 security
 tests/    Pester tests: unit (shaping, retry) and integration (merge, history, checks, security)
-powerbi/  measures.dax, BUILD.md
-arcgis/   BUILD.md (Map Viewer, Arcade styling and pop-ups)
+powerbi/  Tucson Street Conditions.pbip (TMDL model + PBIR report), measures.dax, tools/build_pbip.py, BUILD.md
+arcgis/   BUILD.md (how the map works, optional ArcGIS Online save)
 docs/     requirements, user stories, process maps, test plan, runbook, findings
-site/     the project page
+site/     the project page, map.html (street map), img/ (report and map screenshots)
 ```
 
 ## Sources

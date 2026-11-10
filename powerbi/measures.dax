@@ -13,7 +13,8 @@ RETURN DIVIDE ( SUMX ( scored, fact_segment[oci] * fact_segment[area_sqft] ), SU
 // Share of scored pavement area below 55 (Poor, Very poor, Serious, Failed)
 % Poor or Worse =
 VAR scoredArea = CALCULATE ( SUM ( fact_segment[area_sqft] ), NOT ISBLANK ( fact_segment[oci] ) )
-VAR poorArea   = CALCULATE ( SUM ( fact_segment[area_sqft] ), fact_segment[oci] < 55 )
+-- DAX treats a blank score as 0, so "< 55" alone counts unscored streets as poor (37.9% instead of 36.9%)
+VAR poorArea   = CALCULATE ( SUM ( fact_segment[area_sqft] ), NOT ISBLANK ( fact_segment[oci] ) && fact_segment[oci] < 55 )
 RETURN DIVIDE ( poorArea, scoredArea )
 
 Inspected Over 3 Yrs Ago =

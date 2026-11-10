@@ -9,7 +9,7 @@ Import-Module Pester -RequiredVersion 3.4.0
 Invoke-Pester .\tests          # builds TucsonStreets_Test, runs, drops it. Never touches TucsonStreets.
 ```
 
-**Last run: 2026-11-09, Pester 3.4.0. 16 passed, 0 failed, 1.24 s.**
+**Last run: 2026-11-09, Pester 3.4.0. 16 passed, 0 failed, 1.15 s.**
 
 ## Automated cases (tests/StreetData.Tests.ps1)
 
@@ -39,12 +39,12 @@ Invoke-Pester .\tests          # builds TucsonStreets_Test, runs, drops it. Neve
 | TC-17 | End to end | `.\etl\Load-StreetData.ps1` on an empty database | Exit 0; run_log shows 2,831 / 8,824 / 2,748 rows, status success; under 2 minutes | FR-01, FR-11, NFR-01, NFR-03 | Pass, 16 s (2026-11-09) |
 | TC-18 | End to end | Run again with `-Mode incremental` | Only rows edited since the last load are downloaded (0 that day) | FR-05 | Pass (2026-11-09) |
 | TC-19 | Regression | Run `.\etl\Install-Database.ps1` twice in a row on a loaded database | Both runs finish; row counts unchanged | NFR-02 | Pass (2026-11-09) |
-| TC-20 | UAT, security | Power BI Desktop: Modeling > View as > role "Ward 3", then "Ward 5" | Every visual shows only that ward; Ward 3 has 1,539 segments, Ward 5 has 1,988 | FR-14, BR-01 | Not run yet |
-| TC-21 | UAT, security | View as > Other user `district.lead@example.org` with the dynamic role | Wards 2 and 4 only; `ward3.office@example.org` sees Ward 3 only | FR-14, BR-01 | Not run yet |
-| TC-22 | UAT | Compare the report's ward cards with `SELECT * FROM rpt.v_ward_summary` | Same numbers (e.g. Ward 3 area-weighted condition 67.5, 39.3% poor or worse) | FR-15, BR-02 | Not run yet |
-| TC-23 | UAT | ArcGIS Online map: open, click three segments, toggle ward boundaries | Colors match the band table; pop-up shows street, OCI, inspection date; wards line up | FR-17, BR-02 | Not run yet |
+| TC-20 | UAT, security | Power BI Desktop: Modeling > View as > role "Ward 3", then "Ward 5" | Every visual shows only that ward; Ward 3 has 1,539 segments, Ward 5 has 1,988 | FR-14, BR-01 | Pass for Ward 3 (2026-11-09): only Ward 3 in every visual, 67.5 avg, 39.3% poor, 241 mi, 17 under moratorium. Ward 5 not run |
+| TC-21 | UAT, security | View as > Other user `district.lead@example.org` with the dynamic role | Wards 2 and 4 only; `ward3.office@example.org` sees Ward 3 only | FR-14, BR-01 | Partial (2026-11-09): View as "Ward office" with an account not in `user_ward` correctly shows no data. Other-user test not run; Desktop's View as dialog would not take scripted input |
+| TC-22 | UAT | Compare the report's ward cards with `SELECT * FROM rpt.v_ward_summary` | Same numbers (e.g. Ward 3 area-weighted condition 67.5, 39.3% poor or worse) | FR-15, BR-02 | Pass (2026-11-09): Ward 3 view 67.5 / 39.3% matches SQL; city-wide 68.1 / 36.9% matches. Found D5 |
+| TC-23 | UAT | Street map (`site\map.html`): open, click segments, pick a ward | Colors match the band table; pop-up shows street, OCI, inspection date; wards line up; ward filter zooms and filters | FR-17, BR-02 | Pass (2026-11-09): N Columbus Bl pop-up shows 8, near E Fort Lowell Rd, July 2024; Ward 3 filter correct |
 | TC-24 | UAT | `SELECT * FROM rpt.v_dig_check WHERE dig_status LIKE 'Moratorium%'`, pick one, check the same segment on the City's map | Status and end date agree with the City layer | FR-16, BR-03 | Not run yet |
-| TC-25 | UAT | Data health page vs `SELECT * FROM rpt.v_quality` | Every check and count matches | FR-15, BR-04 | Not run yet |
+| TC-25 | UAT | Data health page vs `SELECT * FROM rpt.v_quality` | Every check and count matches | FR-15, BR-04 | Pass (2026-11-09): all 10 checks match, e.g. 4,540 stale, 141 no score, 0 errors |
 | TC-26 | Failure | Run the loader with the network off (or a bad URL in `StreetData.psm1`) | 4 attempts logged, run_log status failed with the error text, exit code 1 | FR-02, NFR-04 | Not run yet |
 
 ## Defects found during testing
@@ -55,3 +55,4 @@ Invoke-Pester .\tests          # builds TucsonStreets_Test, runs, drops it. Neve
 | D2 | TC-19 | SQL helper left a reader open when a query returned two result sets | Read results with a data adapter that closes the reader |
 | D3 | TC-17 | `-Layers major,minor` through `powershell -File` arrived as one string; the run failed (safely, and logged) | Split on commas and reject unknown layer names up front |
 | D4 | Review | Segment labels showed position codes ("NPI to CL") | Use the cross-street fields instead |
+| D5 | TC-22 | Power BI `% Poor or Worse` read 37.9% against SQL's 36.9%: DAX treats a blank score as 0, so unscored streets counted as poor | Count only scored streets in the numerator (`NOT ISBLANK`), in `build_pbip.py` and `measures.dax` |
