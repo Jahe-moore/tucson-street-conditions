@@ -1,0 +1,4 @@
+logs/
+# Power BI project caches (the .pbip text files themselves are committed)
+**/.pbi/localSettings.json
+**/.pbi/cache.abf

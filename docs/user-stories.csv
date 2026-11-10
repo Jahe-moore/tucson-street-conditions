@@ -1,0 +1,108 @@
+Issue ID,Issue Type,Summary,Description,Acceptance Criteria,Priority,Labels,Parent,Parent summary
+1,Epic,Data load: city layers into SQL Server,"Nightly, logged, retried load of the City's public pavement and moratorium layers.",,High,,,
+2,Epic,Ward reporting with access control,Each ward office sees its own ward; city staff see everything. Enforced in SQL Server and Power BI.,,High,,,
+3,Epic,Data quality you can see,"Checks after every load, results visible to report readers and GIS.",,High,,,
+4,Epic,Map and dig check,ArcGIS Online map by condition and a one-lookup moratorium check for crews.,,High,,,
+101,Story,Pull all three City layers through the ArcGIS REST API,"As GIS staff I want the major, minor and moratorium layers pulled automatically so that nobody exports them by hand.
+
+Requirement: FR-01","Given the City service is up
+When the loader runs in full mode
+Then 2,831 major, 8,824 minor and 2,748 moratorium rows are staged
+And paging uses 1,000 rows a page ordered by OBJECTID",High,etl powershell,1,Data load: city layers into SQL Server
+102,Story,"Retry failed web calls, then fail loudly","As GIS staff I want a temporary outage retried and a lasting one reported so that a blip doesn't break the report and a real failure isn't hidden.
+
+Requirement: FR-02","Given a web call fails
+When it fails up to 3 times then works
+Then the load continues
+Given it fails 4 times
+Then run_log shows status failed with the error
+And the script exits with code 1",High,etl reliability,1,Data load: city layers into SQL Server
+103,Story,Merge on CartegraphID so reruns never duplicate,"As GIS staff I want loads to be safe to repeat so that a rerun after a failure doesn't double the data.
+
+Requirement: FR-03 FR-04","Given data is already loaded
+When the same data loads again
+Then rows new = 0 and changed = 0
+Given the source has a duplicate CartegraphID
+Then the load stops before the merge and names the IDs",High,etl sql,1,Data load: city layers into SQL Server
+104,Story,Nightly incremental and weekly full load,"As GIS staff I want only changed rows pulled nightly and a full pull weekly so that the job is fast and still catches deletions.
+
+Requirement: FR-05 FR-06","Given the last load finished
+When incremental mode runs
+Then only rows with last_edited_date after the newest stored edit are pulled
+When full mode runs
+Then segments missing from the City layer are flagged removed, not deleted",Medium,etl scheduling,1,Data load: city layers into SQL Server
+105,Story,Keep a history of score changes,"As TDOT pavement staff I want to see how a street's score changed so that I can show trend even though the City layer keeps only the latest score.
+
+Requirement: FR-09","Given a segment's OCI or inspection date changes between loads
+When the merge runs
+Then a row is added to core.condition_history with the new values and the run ID",Medium,sql history,1,Data load: city layers into SQL Server
+106,Story,Log every run,"As GIS staff I want one log row per layer per run so that I can tell what loaded and when without reading code.
+
+Requirement: FR-11","Given any run
+Then etl.run_log has start, finish, rows read / new / changed / unchanged, status and error text
+And logs/load_YYYY-MM-DD.log has every line printed",Medium,etl logging,1,Data load: city layers into SQL Server
+107,Story,Ward office sees only its own ward in SQL Server,"As a ward council office I want to see my ward's streets only so that I get my answer without asking TDOT and without seeing other wards' data.
+
+Requirement: FR-13","Given user ward3_office is mapped to Ward 3
+When they query rpt.fact_segment
+Then they get 1,539 rows, all Ward 3
+And selecting from core.street_segment directly is denied",High,security sql,2,Ward reporting with access control
+108,Story,City-wide role for engineers and the oversight commission,"As TDOT pavement staff I want every ward in one view so that I can compare wards fairly.
+
+Requirement: FR-13","Given a member of city_wide_reader
+When they query rpt.fact_segment
+Then they get all 11,655 active segments across wards 1 to 6 and outside wards",High,security sql,2,Ward reporting with access control
+109,Story,Power BI static ward roles,"As the report owner I want a role per ward so that I can prove each ward sees only its own data.
+
+Requirement: FR-14","Given roles Ward 1 to Ward 6 exist
+When I use View as > Ward 3 then Ward 5
+Then every visual shows only that ward (1,539 and 1,988 segments)",High,powerbi security,2,Ward reporting with access control
+110,Story,Power BI dynamic role from the sign-in name,"As the report owner I want access driven by a table so that adding a ward user doesn't mean editing the report.
+
+Requirement: FR-14","Given district.lead@example.org is mapped to wards 2 and 4
+When I use View as > Other user with that email
+Then only wards 2 and 4 appear",Medium,powerbi security,2,Ward reporting with access control
+111,Story,Ward overview and worst-first pages,"As a ward council office I want my ward's condition and its worst streets in one place so that I can answer a constituent the same day.
+
+Requirement: FR-15","Given the report is open
+Then the overview shows area-weighted condition, % poor or worse, miles and segments under moratorium
+And the worst-first page lists segments lowest score first, excluding moratorium and non-City roads
+And ward numbers match rpt.v_ward_summary",High,powerbi,2,Ward reporting with access control
+112,Story,Readable segment names,"As a ward council office I want segments named by cross streets so that I know which block is meant.
+
+Requirement: FR-12","Given a segment with cross streets
+Then it reads like 'S Cherry Av: E Irvington Rd to E Bantam Rd'
+And a segment with one cross street reads 'N Romero Rd near W Roger Rd'",Medium,sql usability,2,Ward reporting with access control
+113,Story,Run data quality checks after every load,"As GIS staff I want the data checked after every load so that bad data is caught before anyone reports on it.
+
+Requirement: FR-10","Given a load finishes
+Then 10 checks write to dq.check_result
+And any error-level check with rows makes the run exit 1",High,data-quality sql,3,Data quality you can see
+114,Story,Catch a partial download,"As GIS staff I want a big drop in row count flagged so that a half-finished download doesn't look like real data.
+
+Requirement: FR-10","Given the last full load read 2,831 rows
+When the next full load reads under 2,548
+Then row_count_drop fires at error level",High,data-quality,3,Data quality you can see
+115,Story,Data health page in the report,"As TDOT pavement staff I want the report to show what the data is missing so that I don't present stale or blank scores as fact.
+
+Requirement: FR-15","Given the report is open
+Then the data health page lists every check, its level and count from rpt.v_quality
+And the last load time per layer",Medium,powerbi data-quality,3,Data quality you can see
+116,Story,Clean ward and date values,"As a ward council office I want county roads and placeholder dates kept out of my numbers so that my ward totals are right.
+
+Requirement: FR-07 FR-08","Given ward 'BOS 1' or blank
+Then it is stored as no ward and shown as Outside city wards
+Given a 1900 or 1905 date
+Then it is stored as unknown",Medium,data-quality sql,3,Data quality you can see
+117,Story,Condition map in ArcGIS Online,"As TDOT pavement staff I want the streets on a map colored by condition so that clusters of bad streets stand out.
+
+Requirement: FR-17","Given the City's public layer is added to an ArcGIS Online web map
+Then segments are colored by the seven condition bands
+And ward boundaries show on top
+And a pop-up shows street, OCI and inspection date",Medium,arcgis,4,Map and dig check
+118,Story,Can we dig here? lookup,"As a utility crew lead I want to look up a segment's moratorium status so that I know before I plan a cut.
+
+Requirement: FR-16","Given a major street segment
+When I look it up in rpt.v_dig_check
+Then I see Moratorium or No moratorium, the end date and days left
+And 302 segments show as under moratorium on 2026-11-09",High,sql permits,4,Map and dig check

@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tucson Street Conditions</title>
+<meta name="description" content="A nightly data pipeline on the City of Tucson's own street condition data: PowerShell, SQL Server, Power BI with ward-level security, and an ArcGIS map.">
+<meta property="og:title" content="Tucson Street Conditions">
+<meta property="og:description" content="Which Tucson streets are worst, how current is the data, and who gets to see what. Built on the city's public data.">
+<meta property="og:type" content="website">
+<meta name="author" content="Jake Moore">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<style>
+  :root {
+    /* condition bands, worst to best; anchored on the red, orange and green tokens in base.css */
+    --b-fail: #B91C1C; --b-vpoor: #D4850A; --b-poor: #E8B64C; --b-fair: #9AA3AE; --b-sat: #6FB08C; --b-good: #1A7A4A;
+  }
+  html { font-size: 17px; }
+  body { background: var(--light-gray); }
+  .wrap { max-width: 1240px; margin-inline: auto; padding-inline: clamp(1rem, 4vw, 2.5rem); }
+  section { padding: 2.6rem 0; }
+  .white { background: var(--white); }
+  .navy { background: var(--navy); color: #fff; }
+  .navbar-links { margin-left: auto; }
+
+  .hero { padding: 3.2rem 0 2.8rem; }
+  .hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 700; line-height: 1.05; margin-bottom: 0.9rem; max-width: 20ch; }
+  .hero .lead { font-size: 1.15rem; line-height: 1.6; color: rgba(255,255,255,0.88); max-width: 56rem; margin-bottom: 1.4rem; }
+  .hero-actions .btn { padding: 0.75rem 1.3rem; font-size: 0.85rem; }
+  .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-top: 2rem; }
+  .fact { border: 1px solid rgba(255,255,255,0.16); border-radius: 6px; padding: 0.8rem 1rem; background: rgba(255,255,255,0.05); }
+  .fact b { display: block; font-family: 'League Spartan', sans-serif; font-size: 1.6rem; line-height: 1.1; }
+  .fact span { font-family: 'League Spartan', sans-serif; font-size: 0.8rem; color: rgba(255,255,255,0.8); }
+
+  h2 { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 700; color: var(--navy); margin-bottom: 0.8rem; max-width: 44ch; }
+  .navy h2 { color: #fff; }
+  .kicker { font-family: 'League Spartan', sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--steel); display: block; margin-bottom: 0.4rem; }
+  .navy .kicker { color: var(--steel-light); }
+  p { max-width: 62rem; margin-bottom: 0.9rem; }
+  .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+  .cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  .cols-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+  .card:hover { transform: none; }
+  .card h3 { font-size: 1.05rem; color: var(--navy); margin-bottom: 0.45rem; }
+  .card p { font-size: 0.92rem; margin-bottom: 0.5rem; }
+  .card p:last-child { margin-bottom: 0; }
+  .navy .card { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.14); color: #fff; box-shadow: none; }
+  .navy .card h3 { color: #fff; }
+  .navy .card p { color: rgba(255,255,255,0.85); }
+  .src { font-family: 'League Spartan', sans-serif; font-size: 0.72rem; }
+  .src a { color: inherit; }
+
+  /* pipeline */
+  .chain { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin-top: 1.4rem; align-items: stretch; }
+  .link { position: relative; padding: 0 1.1rem 0 0; }
+  .link > .card { height: 100%; }
+  .link:not(:last-child)::after { content: ""; position: absolute; right: 0.15rem; top: 2.2rem; width: 0.6rem; height: 0.6rem;
+    border-top: 3px solid var(--steel); border-right: 3px solid var(--steel); transform: rotate(45deg); }
+  .step { font-family: 'League Spartan', sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--steel); display: block; margin-bottom: 0.4rem; }
+  .tool { display: inline-block; font-family: 'League Spartan', sans-serif; font-weight: 600; font-size: 0.75rem; border-radius: 4px;
+    padding: 0.15rem 0.45rem; background: var(--steel-light); color: var(--navy); margin: 0 0.25rem 0.3rem 0; }
+
+  /* ward chart */
+  .wards { display: grid; gap: 0.55rem; margin-top: 1.2rem; }
+  .ward { display: grid; grid-template-columns: 5.2rem 1fr 4.2rem; gap: 0.8rem; align-items: center; }
+  .ward .name { font-family: 'League Spartan', sans-serif; font-weight: 700; color: var(--navy); }
+  .ward .avg { font-family: 'League Spartan', sans-serif; font-weight: 700; color: var(--navy); text-align: right; }
+  .ward .avg small { display: block; font-weight: 400; font-size: 0.68rem; color: var(--text-muted); }
+  .bar { display: flex; height: 1.6rem; border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
+  .bar span { display: block; height: 100%; }
+  .bar span:nth-child(1), .key i.k1 { background: var(--b-fail); }
+  .bar span:nth-child(2), .key i.k2 { background: var(--b-vpoor); }
+  .bar span:nth-child(3), .key i.k3 { background: var(--b-poor); }
+  .bar span:nth-child(4), .key i.k4 { background: var(--b-fair); }
+  .bar span:nth-child(5), .key i.k5 { background: var(--b-sat); }
+  .bar span:nth-child(6), .key i.k6 { background: var(--b-good); }
+  .key { display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; margin-top: 0.9rem; font-family: 'League Spartan', sans-serif; font-size: 0.8rem; }
+  .key i { display: inline-block; width: 0.8rem; height: 0.8rem; border-radius: 2px; margin-right: 0.35rem; vertical-align: -1px; }
+
+  .finding b.num { display: block; font-family: 'League Spartan', sans-serif; font-size: 1.7rem; color: var(--navy); line-height: 1.1; margin-bottom: 0.2rem; }
+  .finding.warn { border-top: 4px solid var(--orange); }
+  .finding.ok { border-top: 4px solid var(--green); }
+  .finding .do { font-family: 'League Spartan', sans-serif; font-size: 0.82rem; font-weight: 600; color: var(--steel); }
+
+  /* who sees what */
+  .compare { width: 100%; border-collapse: collapse; background: var(--white); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .compare th { font-family: 'League Spartan', sans-serif; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase;
+    text-align: left; padding: 0.7rem 0.9rem; background: var(--light-gray); color: var(--steel); border-bottom: 2px solid var(--border); }
+  .compare td { padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--border); font-size: 0.93rem; vertical-align: top; }
+  .compare tr:last-child td { border-bottom: 0; }
+  .compare td:first-child { font-family: 'League Spartan', sans-serif; font-weight: 700; color: var(--navy); }
+  .compare td.n { font-family: 'League Spartan', sans-serif; font-weight: 700; text-align: right; white-space: nowrap; }
+
+  .term { font-family: 'League Spartan', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; color: var(--steel);
+    text-transform: uppercase; display: block; margin-bottom: 0.3rem; }
+  ul.plain { padding-left: 1.1rem; font-size: 0.93rem; }
+  ul.plain li { margin-bottom: 0.35rem; }
+  .table-scroll { overflow-x: auto; }
+  footer { background: var(--navy-dark); color: rgba(255,255,255,0.75); padding: 1.4rem 0; font-family: 'League Spartan', sans-serif; font-size: 0.85rem; }
+  footer a { color: #fff; }
+
+  @media (max-width: 1000px) {
+    .chain { grid-template-columns: 1fr; gap: 1.1rem; }
+    .link { padding: 0; }
+    .link:not(:last-child)::after { right: 50%; top: auto; bottom: -0.9rem; transform: rotate(135deg); }
+    .cols-4, .facts { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 760px) {
+    .cols-2, .cols-3 { grid-template-columns: 1fr; }
+    .navbar-links { display: none; }
+    .ward { grid-template-columns: 4rem 1fr 3.4rem; gap: 0.5rem; }
+  }
+  @media (max-width: 480px) { .cols-4, .facts { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a class="navbar-brand" href="#top">Tucson Street Conditions</a>
+    <ul class="navbar-links">
+      <li><a href="#why">Why</a></li>
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#data">What the data says</a></li>
+      <li><a href="#access">Who sees what</a></li>
+      <li><a href="#docs">Analyst work</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="navy hero" id="top">
+  <div class="wrap">
+    <span class="kicker">Built on the City of Tucson's own public data</span>
+    <h1>Which streets are worst, and who gets to see what?</h1>
+    <p class="lead">Tucson publishes a condition score for every street it maintains. I built the system a city IT team would run on it: a script that pulls the data every night, a SQL Server database that checks it, and a Power BI report where each council office sees only its own ward.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="#data">See what the data says</a>
+      <a class="btn btn-secondary" href="https://github.com/Jahe-moore/tucson-street-conditions">Read the code</a>
+    </div>
+    <div class="facts">
+      <div class="fact"><b>1,837 miles</b><span>of city streets, 11,655 segments</span></div>
+      <div class="fact"><b>37%</b><span>of pavement scored poor or worse</span></div>
+      <div class="fact"><b>2,782</b><span>neighborhood segments last scored in 2020</span></div>
+      <div class="fact"><b>16 tests</b><span>all passing</span></div>
+    </div>
+  </div>
+</header>
+
+<section id="why">
+  <div class="wrap">
+    <span class="kicker">Why this matters in Tucson</span>
+    <h2>The city is spending $590 million fixing streets, worst first.</h2>
+    <p>Voters passed Proposition 411 in 2022 to repair city streets. The commission overseeing it picks projects mainly by the lowest condition score, so the scores decide where the money goes. Three groups lean on that same data every week.</p>
+    <div class="cols-3" style="margin-top:1rem">
+      <div class="card"><h3>Ward council offices</h3><p>Residents call about their street. Staff need to know how their ward compares and which of their streets are next in line.</p></div>
+      <div class="card"><h3>Pavement program staff</h3><p>They build the worst-first list, and need to skip streets that were just repaved and catch scores that are out of date.</p></div>
+      <div class="card"><h3>Utility crews and the permit desk</h3><p>A newly paved major street can't be cut for five years without extra restoration work. Crews need to know before they dig.</p></div>
+    </div>
+    <p class="src" style="margin-top:1rem">Sources: <a href="https://kgun9.com/operation-safe-roads/worst-first-is-tucsons-plan-for-street-repair">KGUN 9 on worst-first</a> &middot; <a href="https://assets.tucsonaz.gov/share/bcc/40524.pdf">oversight commission materials</a> &middot; <a href="https://www.tucsonaz.gov/files/sharedassets/public/v/1/transportation-and-mobility/documents/rowbrochure2018-web.pdf">City of Tucson right-of-way guide</a></p>
+  </div>
+</section>
+
+<section class="white" id="how">
+  <div class="wrap">
+    <span class="kicker">How it works</span>
+    <h2>Five steps, every night, with nobody touching it.</h2>
+    <div class="chain">
+      <div class="link"><div class="card"><span class="step">1. Pull</span>
+        <span class="tool">PowerShell</span><span class="tool">REST API</span>
+        <p>Asks the city's ArcGIS service for street condition and moratorium data, 1,000 rows at a time. Retries if the service hiccups. At night it asks only for what changed.</p></div></div>
+      <div class="link"><div class="card"><span class="step">2. Stage</span>
+        <span class="tool">SQL Server</span>
+        <p>Drops the raw rows into a holding table exactly as they arrived, so a bad download never touches the real data.</p></div></div>
+      <div class="link"><div class="card"><span class="step">3. Clean and merge</span>
+        <span class="tool">T-SQL</span>
+        <p>Fixes known problems (county districts in the ward field, 1900 used as "unknown"), then adds new streets, updates changed ones and records every score change.</p></div></div>
+      <div class="link"><div class="card"><span class="step">4. Check</span>
+        <span class="tool">Data quality</span>
+        <p>Ten checks after every load. A partial download or an impossible score fails the run; stale or missing data is flagged for the GIS team.</p></div></div>
+      <div class="link"><div class="card"><span class="step">5. Report</span>
+        <span class="tool">Power BI</span><span class="tool">ArcGIS</span>
+        <p>A ward scorecard, the worst-first list and a data health page, limited by ward. A map colored by condition.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="data">
+  <div class="wrap">
+    <span class="kicker">What the data says, November 2026</span>
+    <h2>Every ward has a third or more of its pavement in poor shape or worse.</h2>
+    <p>Share of each ward's pavement area in each condition band. The number on the right is the ward's average score out of 100, weighted by pavement area so a long main road counts more than a short side street.</p>
+    <div class="wards" role="img" aria-label="Condition mix by ward. Ward 1 average 70.5, Ward 2 68.2, Ward 3 67.5, Ward 4 69.7, Ward 5 66.3, Ward 6 66.3.">
+      <div class="ward"><span class="name">Ward 1</span><div class="bar"><span style="width:1.5%"></span><span style="width:9.2%"></span><span style="width:21.0%"></span><span style="width:10.5%"></span><span style="width:18.2%"></span><span style="width:39.6%"></span></div><span class="avg">70.5<small>avg</small></span></div>
+      <div class="ward"><span class="name">Ward 2</span><div class="bar"><span style="width:1.3%"></span><span style="width:8.8%"></span><span style="width:28.0%"></span><span style="width:9.6%"></span><span style="width:14.4%"></span><span style="width:37.9%"></span></div><span class="avg">68.2<small>avg</small></span></div>
+      <div class="ward"><span class="name">Ward 3</span><div class="bar"><span style="width:3.9%"></span><span style="width:11.5%"></span><span style="width:23.9%"></span><span style="width:9.9%"></span><span style="width:12.7%"></span><span style="width:38.1%"></span></div><span class="avg">67.5<small>avg</small></span></div>
+      <div class="ward"><span class="name">Ward 4</span><div class="bar"><span style="width:1.8%"></span><span style="width:8.3%"></span><span style="width:24.0%"></span><span style="width:10.7%"></span><span style="width:21.0%"></span><span style="width:34.3%"></span></div><span class="avg">69.7<small>avg</small></span></div>
+      <div class="ward"><span class="name">Ward 5</span><div class="bar"><span style="width:2.4%"></span><span style="width:10.7%"></span><span style="width:26.4%"></span><span style="width:9.2%"></span><span style="width:22.2%"></span><span style="width:29.2%"></span></div><span class="avg">66.3<small>avg</small></span></div>
+      <div class="ward"><span class="name">Ward 6</span><div class="bar"><span style="width:2.1%"></span><span style="width:10.5%"></span><span style="width:26.3%"></span><span style="width:8.2%"></span><span style="width:22.0%"></span><span style="width:30.9%"></span></div><span class="avg">66.3<small>avg</small></span></div>
+    </div>
+    <div class="key"><span><i class="k1"></i>Failed or serious (under 25)</span><span><i class="k2"></i>Very poor (25 to 40)</span><span><i class="k3"></i>Poor (40 to 55)</span><span><i class="k4"></i>Fair (55 to 70)</span><span><i class="k5"></i>Satisfactory (70 to 85)</span><span><i class="k6"></i>Good (85 and up)</span></div>
+    <p class="src" style="margin-top:0.6rem">Bands follow the ASTM D6433 pavement rating scale. Ward 3 has the most pavement in the two worst bands (15.4%).</p>
+
+    <div class="cols-3" style="margin-top:1.6rem">
+      <div class="card finding warn"><b class="num">2,782</b><h3>Neighborhood streets not scored since 2020</h3><p>Most neighborhood scores come from one 2020 survey. A worst-first list built on six-year-old scores can rank the wrong streets.</p><span class="do">Re-inspect these before ranking them.</span></div>
+      <div class="card finding warn"><b class="num">25</b><h3>Streets with a broken ward</h3><p>19 have a county supervisor district typed in the ward field, and 6 city streets have no ward at all. They drop out of every ward's report.</p><span class="do">Fix at the source; the list is in the database.</span></div>
+      <div class="card finding ok"><b class="num">0 of 67</b><h3>Repaired streets still marked poor</h3><p>Every street repaired after its last inspection already shows a fresh score. The city's repair records and scores line up.</p><span class="do">No action; the check stays on.</span></div>
+    </div>
+    <div class="cols-3" style="margin-top:1rem">
+      <div class="card"><h3>302 major segments under a dig moratorium</h3><p>Recently rebuilt or resurfaced; the last one ends September 2031. The dig-check view lists them with days left.</p></div>
+      <div class="card"><h3>141 segments with no score</h3><p>Left out of every average rather than counted as zero, and listed on the data health page.</p></div>
+      <div class="card"><h3>Major streets are worse than neighborhood streets</h3><p>Average 64.1 for major streets against 70.5 for neighborhood streets, by pavement area.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="white" id="access">
+  <div class="wrap">
+    <span class="kicker">Who sees what</span>
+    <h2>Each council office sees its own ward. Engineers see the whole city.</h2>
+    <p>The rule is enforced in two places. The database itself filters rows by who is asking, so it holds no matter what tool someone connects with. The Power BI report has matching roles, including one that reads each person's wards from a table, so adding a staff member is one row, not a new report.</p>
+    <div class="table-scroll" style="margin-top:1rem">
+    <table class="compare">
+      <thead><tr><th>Signed in as</th><th>Allowed</th><th style="text-align:right">Segments they see</th></tr></thead>
+      <tbody>
+        <tr><td>Ward 3 office</td><td>Ward 3 only</td><td class="n">1,539</td></tr>
+        <tr><td>Ward 5 office</td><td>Ward 5 only</td><td class="n">1,988</td></tr>
+        <tr><td>City engineer</td><td>All wards, plus county and state roads in the city's layer</td><td class="n">11,655</td></tr>
+        <tr><td>Ward 3 office, querying the raw tables</td><td>Refused; ward staff can only read the report views</td><td class="n">0</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="src" style="margin-top:0.6rem">Counts are from the automated tests and a live run on November 9, 2026.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <span class="kicker">Under the hood</span>
+    <h2>Built to be run by someone else.</h2>
+    <div class="cols-3" style="margin-top:1rem">
+      <div class="card"><span class="term">Rerun safely</span><h3>Running it twice changes nothing</h3><p>Each row carries a fingerprint of its values. A second load of the same data reports 11,655 unchanged and writes nothing.</p></div>
+      <div class="card"><span class="term">Change history</span><h3>Trend the city's layer can't show</h3><p>The city keeps only today's score. Every time a score changes, the old and new values are saved, so trend builds up night by night.</p></div>
+      <div class="card"><span class="term">Fails loudly</span><h3>A bad night doesn't slip through</h3><p>If a download comes back 10% smaller than last time, or a score is out of range, the run is marked failed and the log says why.</p></div>
+      <div class="card"><span class="term">One log row per layer</span><h3>Easy to answer "did it run?"</h3><p>Start, finish, rows read, new, changed, unchanged, status and error message for every layer, every night.</p></div>
+      <div class="card"><span class="term">Scheduled</span><h3>Nightly and weekly</h3><p>Only the changes every night at 2:15, the whole layer every Sunday so streets the city removed get flagged.</p></div>
+      <div class="card"><span class="term">Tested</span><h3>16 automated tests</h3><p>Unit tests for the PowerShell functions, and database tests that build a throwaway copy, load sample streets and check the merge, history, checks and security.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="white" id="docs">
+  <div class="wrap">
+    <span class="kicker">The analyst work</span>
+    <h2>The documents a city project would need.</h2>
+    <div class="cols-3" style="margin-top:1rem">
+      <div class="card"><h3>Requirements</h3><p>Who needs what, what's in and out of scope, and every requirement traced to the test that proves it.</p></div>
+      <div class="card"><h3>User stories</h3><p>Epics and stories with acceptance criteria, in a file Jira imports directly.</p></div>
+      <div class="card"><h3>Process maps</h3><p>How a ward office gets street information today, and how it works with this system, in standard BPMN.</p></div>
+      <div class="card"><h3>Test plan</h3><p>Unit, integration, regression and security tests, plus the hands-on checks for the report and the map.</p></div>
+      <div class="card"><h3>Runbook</h3><p>What runs when, where the logs are, what each warning means and what to do about it.</p></div>
+      <div class="card"><h3>Findings</h3><p>What the data says, what each finding means for a decision, and what the data can't tell you.</p></div>
+    </div>
+    <div class="cols-2" style="margin-top:1.2rem">
+      <div class="card"><h3>Tools</h3><p>Windows PowerShell 5.1, SQL Server 2022 Express and T-SQL, Power BI Desktop with DAX and row-level security, ArcGIS Online with Arcade, Pester for tests, BPMN for process maps, Jira for stories.</p></div>
+      <div class="card"><h3>What it can't tell you</h3>
+        <ul class="plain">
+          <li>Costs. The data has pavement area but no repair prices, so no dollar figures here.</li>
+          <li>How fast streets get worse. That needs the score history this system has only started collecting.</li>
+          <li>How the city's staff work today. The current-process map is my assumption, to confirm with them.</li>
+        </ul></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">Tucson Street Conditions &middot; built by Jake Moore &middot; data: City of Tucson GIS and Pima County GIS open data &middot; <a href="https://github.com/Jahe-moore/tucson-street-conditions">Code on GitHub</a></div>
+</footer>
+</body>
+</html>

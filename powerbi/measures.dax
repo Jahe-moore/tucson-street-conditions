@@ -1,0 +1,48 @@
+// Measures for the Street Conditions report. Create a blank table named _Measures (Home > Enter data, OK),
+// then add each measure below to it (Modeling > New measure, paste one block at a time).
+
+Segments = COUNTROWS ( fact_segment )
+
+Miles = SUM ( fact_segment[length_mi] )
+
+// Weighted by pavement area: a long arterial counts more than a short cul-de-sac.
+Avg Condition =
+VAR scored = FILTER ( fact_segment, NOT ISBLANK ( fact_segment[oci] ) )
+RETURN DIVIDE ( SUMX ( scored, fact_segment[oci] * fact_segment[area_sqft] ), SUMX ( scored, fact_segment[area_sqft] ) )
+
+// Share of scored pavement area below 55 (Poor, Very poor, Serious, Failed)
+% Poor or Worse =
+VAR scoredArea = CALCULATE ( SUM ( fact_segment[area_sqft] ), NOT ISBLANK ( fact_segment[oci] ) )
+VAR poorArea   = CALCULATE ( SUM ( fact_segment[area_sqft] ), fact_segment[oci] < 55 )
+RETURN DIVIDE ( poorArea, scoredArea )
+
+Inspected Over 3 Yrs Ago =
+CALCULATE ( [Segments], fact_segment[inspection_age_yrs] > 3 ) + 0
+
+No Score = CALCULATE ( [Segments], ISBLANK ( fact_segment[oci] ) ) + 0
+
+Under Moratorium = CALCULATE ( [Segments], fact_segment[under_moratorium] = TRUE () ) + 0
+
+Data As Of =
+"Data loaded " & FORMAT ( MAX ( v_load_status[finished_at] ), "mmm d, yyyy h:mm AM/PM" )
+
+// Shows which role the viewer is in; put it in a card at the top of every page.
+Viewing As =
+VAR wards = CONCATENATEX ( VALUES ( dim_ward[ward_name] ), dim_ward[ward_name], ", ", dim_ward[ward_id] )
+RETURN IF ( COUNTROWS ( VALUES ( dim_ward[ward_id] ) ) >= 7, "All wards", wards )
+
+Quality Issues = CALCULATE ( SUM ( v_quality[row_count] ), v_quality[severity] IN { "error", "warn" } ) + 0
+
+
+// ---- Row-level security (Modeling > Manage roles) ----------------------------------------------
+// Static roles, one per ward. Table: dim_ward. Filter:
+//   Ward 3      [ward_id] = 3
+//   Ward 5      [ward_id] = 5
+//   City-wide   (no filter)
+//
+// Dynamic role: one role for every council office; the ward list comes from the database.
+//   Role "Ward office", table dim_ward, filter:
+//   [ward_id] IN CALCULATETABLE ( VALUES ( user_ward[ward_id] ), user_ward[user_name] = USERPRINCIPALNAME () )
+//
+// Test: Modeling > View as > Ward office + Other user = ward3.office@example.org  -> Ward 3 only
+//       Other user = district.lead@example.org                                    -> Wards 2 and 4
