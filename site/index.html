@@ -137,7 +137,7 @@
   <div class="wrap">
     <span class="kicker">Built on the City of Tucson's own public data</span>
     <h1>Which streets are worst, and who gets to see what?</h1>
-    <p class="lead">Tucson publishes a condition score for every street it maintains. I built the system a city IT team would run on it: a script that pulls the data every night, a SQL Server database that checks it, and a Power BI report where each council office sees only its own ward.</p>
+    <p class="lead">Tucson publishes a condition score for every street it maintains. I built the system a city IT team would run on it: a script that pulls the data on a nightly schedule, a SQL Server database that checks it, and a Power BI report where each council office sees only its own ward.</p>
     <div class="hero-actions">
       <a class="btn btn-primary" href="#data">See what the data says</a>
       <a class="btn btn-secondary" href="https://github.com/Jahe-moore/tucson-street-conditions">Read the code</a>
@@ -155,20 +155,20 @@
   <div class="wrap">
     <span class="kicker">Why this matters in Tucson</span>
     <h2>The city is spending $590 million fixing streets, worst first.</h2>
-    <p>Voters passed Proposition 411 in 2022 to repair city streets. The commission overseeing it picks projects mainly by the lowest condition score, so the scores decide where the money goes. Three groups lean on that same data every week.</p>
+    <p>Tucson voters approved Proposition 411, a 10-year half-cent sales tax, and $590 million of it goes to neighborhood streets. The commission overseeing it picks projects first by the lowest condition score, then balances across wards and equity, so the scores steer where the money goes. Three groups lean on that same data every week.</p>
     <div class="cols-3" style="margin-top:1rem">
       <div class="card"><h3>Ward council offices</h3><p>Residents call about their street. Staff need to know how their ward compares and which of their streets are next in line.</p></div>
       <div class="card"><h3>Pavement program staff</h3><p>They build the worst-first list, and need to skip streets that were just repaved and catch scores that are out of date.</p></div>
       <div class="card"><h3>Utility crews and the permit desk</h3><p>A newly paved major street can't be cut for five years without extra restoration work. Crews need to know before they dig.</p></div>
     </div>
-    <p class="src" style="margin-top:1rem">Sources: <a href="https://kgun9.com/operation-safe-roads/worst-first-is-tucsons-plan-for-street-repair">KGUN 9 on worst-first</a> &middot; <a href="https://assets.tucsonaz.gov/share/bcc/40524.pdf">oversight commission materials</a> &middot; <a href="https://www.tucsonaz.gov/files/sharedassets/public/v/1/transportation-and-mobility/documents/rowbrochure2018-web.pdf">City of Tucson right-of-way guide</a></p>
+    <p class="src" style="margin-top:1rem">Sources: <a href="https://content.govdelivery.com/accounts/AZTUCSON/bulletins/362edfc">City of Tucson, Prop 411 Phase 1 release</a> &middot; <a href="https://kgun9.com/operation-safe-roads/worst-first-is-tucsons-plan-for-street-repair">KGUN 9 on worst-first</a> &middot; <a href="https://www.tucsonaz.gov/files/sharedassets/public/v/1/transportation-and-mobility/documents/rowbrochure2018-web.pdf">City of Tucson right-of-way guide</a></p>
   </div>
 </section>
 
 <section class="white" id="how">
   <div class="wrap">
     <span class="kicker">How it works</span>
-    <h2>Five steps, every night, with nobody touching it.</h2>
+    <h2>Five steps, built to run every night with nobody touching it.</h2>
     <div class="chain">
       <div class="link"><div class="card"><span class="step">1. Pull</span>
         <span class="tool">PowerShell</span><span class="tool">REST API</span>
@@ -245,9 +245,9 @@
     <div class="cols-3" style="margin-top:1rem">
       <div class="card"><span class="term">Rerun safely</span><h3>Running it twice changes nothing</h3><p>Each row carries a fingerprint of its values. A second load of the same data reports 11,655 unchanged and writes nothing.</p></div>
       <div class="card"><span class="term">Change history</span><h3>Trend the city's layer can't show</h3><p>The city keeps only today's score. Every time a score changes, the old and new values are saved, so trend builds up night by night.</p></div>
-      <div class="card"><span class="term">Fails loudly</span><h3>A bad night doesn't slip through</h3><p>If a download comes back 10% smaller than last time, or a score is out of range, the run is marked failed and the log says why.</p></div>
+      <div class="card"><span class="term">Fails loudly</span><h3>A bad night doesn't slip through</h3><p>If a full download comes back 10% smaller than last time, the load stops before touching the real data. An impossible score fails the run too, and the log says why.</p></div>
       <div class="card"><span class="term">One log row per layer</span><h3>Easy to answer "did it run?"</h3><p>Start, finish, rows read, new, changed, unchanged, status and error message for every layer, every night.</p></div>
-      <div class="card"><span class="term">Scheduled</span><h3>Nightly and weekly</h3><p>Only the changes every night at 2:15, the whole layer every Sunday so streets the city removed get flagged.</p></div>
+      <div class="card"><span class="term">Scheduled</span><h3>Nightly and weekly</h3><p>One script sets up Windows Task Scheduler: only the changes every night at 2:15, the whole layer every Sunday so streets the city removed get flagged.</p></div>
       <div class="card"><span class="term">Tested</span><h3>16 automated tests</h3><p>Unit tests for the PowerShell functions, and database tests that build a throwaway copy, load sample streets and check the merge, history, checks and security.</p></div>
     </div>
   </div>

@@ -10,7 +10,7 @@ by City staff. Anything below about how the City works today is either sourced (
 
 | | |
 |---|---|
-| What the city is doing | Prop 411 is a $590 million street program. Projects are picked mainly by lowest Overall Condition Index (OCI) first ([KGUN 9](https://kgun9.com/operation-safe-roads/worst-first-is-tucsons-plan-for-street-repair), [City BCC packet](https://assets.tucsonaz.gov/share/bcc/40524.pdf)) |
+| What the city is doing | Prop 411 is a voter-approved 10-year half-cent sales tax; $590 million goes to neighborhood streets. Phase 1 projects were picked by lowest Overall Condition Index (OCI) first, then ward proportionality and equity ([City of Tucson release](https://content.govdelivery.com/accounts/AZTUCSON/bulletins/362edfc), [KGUN 9](https://kgun9.com/operation-safe-roads/worst-first-is-tucsons-plan-for-street-repair)) |
 | What the data is | The City publishes condition scores for 11,655 street segments (1,837 miles) as public ArcGIS layers, plus a layer of major streets under a pavement-cut moratorium |
 | The gap | The layers hold only the latest score. Nothing keeps history, checks the data, splits it by ward with access control, or answers "can we dig here?" in one place |
 | Today (assumed, to confirm with staff) | A ward office that wants its ward's street list emails TDOT. Staff export the layer, filter it in Excel and email it back. A utility crew learns about a moratorium during permit review |

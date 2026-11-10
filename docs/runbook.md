@@ -59,7 +59,7 @@ SELECT * FROM rpt.v_quality ORDER BY severity, check_name;
 |---|---|---|
 | Log shows "Attempt n failed", run_log status `failed` | City ArcGIS service down or slow | Nothing to fix here. The next scheduled run picks it up. Run by hand once the City's map loads |
 | `failed` with "Invalid column name" or a field missing | City renamed or dropped a field | Compare the layer's field list (`<layer url>?f=json`) with `ConvertTo-SegmentTable` in `etl\StreetData.psm1`; update the mapping and `sql\01_schema.sql` |
-| `row_count_drop` fires | Partial download, or the City really removed many segments | Rerun the full load. If the count stays low, confirm with City GIS before trusting the report |
+| Run fails with "Partial download" | A full load got under 90% of the last full load's rows. The merge stopped and nothing changed | Rerun the full load. If it keeps failing, check the layer on the City's site; if the City really removed that many segments, confirm with City GIS, then set that layer's last successful full row in etl.run_log to status 'superseded' so the new, smaller count becomes the baseline |
 | "A network-related or instance-specific error" | SQL Server service stopped | `Get-Service 'MSSQL$SQLEXPRESS'`, then `Start-Service 'MSSQL$SQLEXPRESS'` from an admin shell |
 | "Duplicate CartegraphID in source" | City layer has a duplicate key | Load stops before touching data. Report the IDs to City GIS |
 | "Unknown layer(s)" | Typo in `-Layers` | Use major, minor, moratorium |

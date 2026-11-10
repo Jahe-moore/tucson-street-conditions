@@ -28,7 +28,7 @@
         <bpmn:flowNodeRef>E2</bpmn:flowNodeRef>
       </bpmn:lane>
     </bpmn:laneSet>
-    <bpmn:startEvent id="S1" name="Question about a street"><bpmn:outgoing>F1</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:startEvent id="S1" name="Resident calls"><bpmn:outgoing>F1</bpmn:outgoing></bpmn:startEvent>
     <bpmn:userTask id="T1" name="Open ward report (shows only own ward)"><bpmn:incoming>F1</bpmn:incoming><bpmn:outgoing>F2</bpmn:outgoing></bpmn:userTask>
     <bpmn:endEvent id="E1" name="Answered same day"><bpmn:incoming>F2</bpmn:incoming></bpmn:endEvent>
     <bpmn:startEvent id="S3" name="Nightly 2:15 AM"><bpmn:outgoing>F3</bpmn:outgoing><bpmn:timerEventDefinition id="TimerDef_S3" /></bpmn:startEvent>
@@ -65,7 +65,7 @@
     <bpmndi:BPMNShape id="Lane_Ward_di" bpmnElement="Lane_Ward" isHorizontal="true"><dc:Bounds x="180" y="80" width="970" height="160" /></bpmndi:BPMNShape>
     <bpmndi:BPMNShape id="Lane_TDOT_di" bpmnElement="Lane_TDOT" isHorizontal="true"><dc:Bounds x="180" y="240" width="970" height="160" /></bpmndi:BPMNShape>
     <bpmndi:BPMNShape id="Lane_Util_di" bpmnElement="Lane_Util" isHorizontal="true"><dc:Bounds x="180" y="400" width="970" height="160" /></bpmndi:BPMNShape>
-    <bpmndi:BPMNShape id="S1_di" bpmnElement="S1"><dc:Bounds x="220" y="142" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="214" y="182" width="70" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+    <bpmndi:BPMNShape id="S1_di" bpmnElement="S1"><dc:Bounds x="220" y="142" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="208" y="182" width="60" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
     <bpmndi:BPMNShape id="T1_di" bpmnElement="T1"><dc:Bounds x="290" y="120" width="120" height="80" /></bpmndi:BPMNShape>
     <bpmndi:BPMNShape id="E1_di" bpmnElement="E1"><dc:Bounds x="450" y="142" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="423" y="182" width="90" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
     <bpmndi:BPMNShape id="S3_di" bpmnElement="S3"><dc:Bounds x="220" y="302" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="214" y="342" width="70" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
@@ -74,7 +74,7 @@
     <bpmndi:BPMNShape id="T4_di" bpmnElement="T4"><dc:Bounds x="610" y="280" width="120" height="80" /></bpmndi:BPMNShape>
     <bpmndi:BPMNShape id="G2_di" bpmnElement="G2" isMarkerVisible="true"><dc:Bounds x="770" y="295" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="750" y="263" width="90" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
     <bpmndi:BPMNShape id="T5_di" bpmnElement="T5"><dc:Bounds x="870" y="280" width="120" height="80" /></bpmndi:BPMNShape>
-    <bpmndi:BPMNShape id="E3_di" bpmnElement="E3"><dc:Bounds x="1050" y="302" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1023" y="342" width="90" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+    <bpmndi:BPMNShape id="E3_di" bpmnElement="E3"><dc:Bounds x="1050" y="302" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1030" y="262" width="76" height="34" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
     <bpmndi:BPMNShape id="S2_di" bpmnElement="S2"><dc:Bounds x="220" y="462" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="214" y="502" width="70" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
     <bpmndi:BPMNShape id="T6_di" bpmnElement="T6"><dc:Bounds x="290" y="440" width="120" height="80" /></bpmndi:BPMNShape>
     <bpmndi:BPMNShape id="G3_di" bpmnElement="G3" isMarkerVisible="true"><dc:Bounds x="450" y="455" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="430" y="423" width="90" height="40" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>

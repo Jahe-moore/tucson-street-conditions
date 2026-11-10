@@ -48,7 +48,7 @@ etl.run_log    one row per layer per run: rows read / new / changed / unchanged,
 | Incremental | Asks the city only for rows edited since the last load. A full load also flags segments the city removed |
 | Idempotent | Running twice changes nothing. Each row carries a SHA-256 hash; only real changes count as updates |
 | History | The city's layer holds only the latest score. Every score change the loader sees lands in `core.condition_history`, so trend builds over time |
-| Data quality | Out-of-range scores, partial downloads (row count drops 10%+), orphan moratorium rows, missing scores, stale inspections, ward problems |
+| Data quality | Partial downloads (a full load 10%+ smaller stops before any change), out-of-range scores, orphan moratorium rows, missing scores, stale inspections, ward problems |
 | Security | SQL Server row-level security: `ward_reader` users see only their wards (`sec.user_ward`), `city_wide_reader` sees all. Power BI has matching static and dynamic (`USERPRINCIPALNAME()`) roles |
 | Schedule | `etl/Register-Task.ps1`: nightly incremental 2:15 AM, Sunday full 3:15 AM (Task Scheduler) |
 
@@ -87,4 +87,4 @@ site/     the project page
 - Pavement Condition, Major and Minor Streets; Pavement Moratorium, Major Roads: City of Tucson GIS, ArcGIS Online.
 - Wards - City of Tucson: Pima County GIS open data.
 - Condition bands: ASTM D6433 pavement rating scale. The city's OCI uses the same 0 to 100 range.
-- Prop 411 program and worst-first selection: City of Tucson oversight commission materials; 5-year cut moratorium and OCI 40 fee exemption: City of Tucson Permits and Codes. Links in [docs/requirements.md](docs/requirements.md).
+- Prop 411 program and worst-first selection: City of Tucson Prop 411 Phase 1 release (content.govdelivery.com/accounts/AZTUCSON/bulletins/362edfc) and KGUN 9; 5-year cut moratorium and OCI 40 fee exemption: City of Tucson Permits and Codes. Links in [docs/requirements.md](docs/requirements.md).

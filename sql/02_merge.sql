@@ -55,6 +55,22 @@ BEGIN
         jurisdiction, custodian, ward_raw, length_ft, width_ft, area_sqft, inspection_date, oci, is_protected,
         last_treated_date, source_edited_at, mid_lat, mid_lon));
 
+    /* A full load that comes back much smaller than the last good one is probably a partial download.
+       Stop before the merge would flag thousands of real streets as removed. */
+    IF @mode = 'full'
+    BEGIN
+        DECLARE @got int = (SELECT COUNT(*) FROM #src);
+        DECLARE @last int = (SELECT TOP 1 rows_read FROM etl.run_log
+                             WHERE layer = LOWER(@street_class) AND mode = 'full' AND status = 'success' AND run_id < @run_id
+                             ORDER BY run_id DESC);
+        IF @last IS NOT NULL AND @got < 0.9 * @last
+        BEGIN
+            DECLARE @msg nvarchar(200) = CONCAT('Partial download: ', @got, ' rows against ', @last,
+                                                ' on the last full load. Nothing was changed.');
+            THROW 50001, @msg, 1;
+        END
+    END
+
     DECLARE @changes TABLE (action nvarchar(10), cartegraph_id varchar(20), old_oci decimal(5,2), old_insp date,
                             new_oci decimal(5,2), new_insp date);
 

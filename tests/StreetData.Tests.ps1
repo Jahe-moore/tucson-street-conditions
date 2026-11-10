@@ -89,15 +89,19 @@ Describe 'Integration: merge, history, quality checks, ward security' {
         (Invoke-Sql $c "SELECT COUNT(*) FROM core.condition_history WHERE cartegraph_id='101'" -Scalar) | Should Be 2
     }
     It 'flags a segment the city removed, but only on a full load' {
-        Load @($base[1], $base[2], $base[3]) 'incremental' | Out-Null
+        $filler = 1..16 | ForEach-Object { New-Feature @{ CartegraphID = "40$_" } }
+        Load (@($base) + $filler) 'full' | Out-Null                    # 20 rows
+        $minus101 = @($base[1], $base[2], $base[3]) + $filler           # 19 rows: 101 is gone
+        Load $minus101 'incremental' | Out-Null
         (Invoke-Sql $c "SELECT removed_from_source FROM core.street_segment WHERE cartegraph_id='101'" -Scalar) | Should Be $false
-        Load @($base[1], $base[2], $base[3]) 'full' | Out-Null
+        Load $minus101 'full' | Out-Null
         (Invoke-Sql $c "SELECT removed_from_source FROM core.street_segment WHERE cartegraph_id='101'" -Scalar) | Should Be $true
     }
     It 'shows a ward office only its own ward' {
         (Invoke-Sql $c "EXECUTE AS USER='ward5_office'; SELECT COUNT(*) FROM rpt.fact_segment; REVERT;").Rows[0][0] | Should Be 1
         (Invoke-Sql $c "EXECUTE AS USER='ward5_office'; SELECT MAX(ward_id) FROM rpt.fact_segment; REVERT;").Rows[0][0] | Should Be 5
-        (Invoke-Sql $c "EXECUTE AS USER='city_engineer'; SELECT COUNT(*) FROM rpt.fact_segment; REVERT;").Rows[0][0] | Should Be 3
+        $all = Invoke-Sql $c 'SELECT COUNT(*) FROM rpt.fact_segment' -Scalar
+        (Invoke-Sql $c "EXECUTE AS USER='city_engineer'; SELECT COUNT(*) FROM rpt.fact_segment; REVERT;").Rows[0][0] | Should Be $all
     }
     It 'blocks a ward office from reading the base table directly' {
         { Invoke-Sql $c "EXECUTE AS USER='ward3_office'; SELECT COUNT(*) FROM core.street_segment; REVERT;" } | Should Throw 'permission'
@@ -110,13 +114,12 @@ Describe 'Integration: merge, history, quality checks, ward security' {
         ($checks.Rows | Where-Object check_name -eq 'oci_out_of_range').row_count | Should Be 1
         ($checks.Rows | Where-Object check_name -eq 'county_district_in_ward_field').row_count | Should Be 1
     }
-    It 'fails the quality check when a full load comes back much smaller than the last one' {
+    It 'stops a partial full download before it marks real streets as removed' {
         $big = 1..20 | ForEach-Object { New-Feature @{ CartegraphID = "30$_" } }
         Load $big 'full' | Out-Null
-        Load $big[0..4] 'full' | Out-Null
-        $run = Invoke-Sql $c 'SELECT MAX(run_id) FROM etl.run_log' -Scalar
-        $checks = Invoke-Sql $c 'EXEC dq.usp_run_checks @run_id=@r' @{ r = $run }
-        ($checks.Rows | Where-Object check_name -eq 'row_count_drop').row_count | Should Be 1
+        $before = Invoke-Sql $c 'SELECT COUNT(*) FROM core.street_segment WHERE removed_from_source = 1' -Scalar
+        { Load $big[0..4] 'full' } | Should Throw 'Partial download'
+        (Invoke-Sql $c 'SELECT COUNT(*) FROM core.street_segment WHERE removed_from_source = 1' -Scalar) | Should Be $before
     }
 
     $c.Close()

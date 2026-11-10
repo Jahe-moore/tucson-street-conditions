@@ -30,7 +30,7 @@ Invoke-Pester .\tests          # builds TucsonStreets_Test, runs, drops it. Neve
 | TC-13 | Security | Ward 5's office sees only Ward 5; the city engineer sees everything | shows a ward office only its own ward | FR-13, BR-01 | Pass |
 | TC-14 | Security | A ward user can't read the base table at all, only the report views | blocks a ward office from reading the base table directly | FR-13 | Pass |
 | TC-15 | Integration | A score of 150 trips the out-of-range error check | fails the quality check when a score is out of range | FR-10, BR-04 | Pass |
-| TC-16 | Integration | A full load 75% smaller than the last one trips the row-count check | fails the quality check when a full load comes back much smaller than the last one | FR-10, BR-04 | Pass |
+| TC-16 | Integration | A full load 75% smaller than the last one is refused before any row is marked removed | stops a partial full download before it marks real streets as removed | FR-10, BR-04 | Pass |
 
 ## Manual cases
 
