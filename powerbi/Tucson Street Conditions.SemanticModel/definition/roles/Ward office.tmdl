@@ -1,0 +1,4 @@
+role 'Ward office'
+	modelPermission: read
+
+	tablePermission dim_ward = [ward_id] IN CALCULATETABLE ( VALUES ( user_ward[ward_id] ), user_ward[user_name] = USERPRINCIPALNAME () )

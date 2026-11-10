@@ -1,0 +1,105 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "health_tbl_load",
+  "position": {
+    "x": 864,
+    "y": 70,
+    "z": 0,
+    "width": 392,
+    "height": 320
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "drillFilterOtherVisuals": true,
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "v_load_status"
+                    }
+                  },
+                  "Property": "layer"
+                }
+              },
+              "queryRef": "v_load_status.layer",
+              "nativeQueryRef": "layer",
+              "displayName": "Layer"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "v_load_status"
+                    }
+                  },
+                  "Property": "status"
+                }
+              },
+              "queryRef": "v_load_status.status",
+              "nativeQueryRef": "status",
+              "displayName": "Status"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "v_load_status"
+                    }
+                  },
+                  "Property": "rows_read"
+                }
+              },
+              "queryRef": "v_load_status.rows_read",
+              "nativeQueryRef": "rows_read",
+              "displayName": "Rows read"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "v_load_status"
+                    }
+                  },
+                  "Property": "finished_at"
+                }
+              },
+              "queryRef": "v_load_status.finished_at",
+              "nativeQueryRef": "finished_at",
+              "displayName": "Finished"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Last load of each layer'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

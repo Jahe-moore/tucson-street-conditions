@@ -1,0 +1,168 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "worst_tbl_worst",
+  "position": {
+    "x": 24,
+    "y": 130,
+    "z": 0,
+    "width": 860,
+    "height": 570
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "drillFilterOtherVisuals": true,
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "v_worst_first"
+                    }
+                  },
+                  "Property": "rank_in_ward"
+                }
+              },
+              "queryRef": "v_worst_first.rank_in_ward",
+              "nativeQueryRef": "rank_in_ward",
+              "displayName": "Rank in ward"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_ward"
+                    }
+                  },
+                  "Property": "ward_name"
+                }
+              },
+              "queryRef": "dim_ward.ward_name",
+              "nativeQueryRef": "ward_name",
+              "displayName": "Ward"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "v_worst_first"
+                    }
+                  },
+                  "Property": "segment_label"
+                }
+              },
+              "queryRef": "v_worst_first.segment_label",
+              "nativeQueryRef": "segment_label",
+              "displayName": "Street segment"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "v_worst_first"
+                    }
+                  },
+                  "Property": "street_class"
+                }
+              },
+              "queryRef": "v_worst_first.street_class",
+              "nativeQueryRef": "street_class",
+              "displayName": "Type"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "v_worst_first"
+                    }
+                  },
+                  "Property": "oci"
+                }
+              },
+              "queryRef": "v_worst_first.oci",
+              "nativeQueryRef": "oci",
+              "displayName": "Condition"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "v_worst_first"
+                    }
+                  },
+                  "Property": "area_sqft"
+                }
+              },
+              "queryRef": "v_worst_first.area_sqft",
+              "nativeQueryRef": "area_sqft",
+              "displayName": "Pavement sq ft"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "v_worst_first"
+                    }
+                  },
+                  "Property": "inspection_date"
+                }
+              },
+              "queryRef": "v_worst_first.inspection_date",
+              "nativeQueryRef": "inspection_date",
+              "displayName": "Last inspected"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "v_worst_first"
+                  }
+                },
+                "Property": "oci"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "''"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

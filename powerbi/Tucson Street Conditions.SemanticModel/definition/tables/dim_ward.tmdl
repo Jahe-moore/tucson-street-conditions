@@ -1,0 +1,21 @@
+table dim_ward
+
+	column ward_id
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: ward_id
+		isHidden
+
+	column ward_name
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ward_name
+
+	partition dim_ward = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database("localhost\SQLEXPRESS", "TucsonStreets"),
+				    Data = Source{[Schema="rpt",Item="dim_ward"]}[Data]
+				in
+				    Data

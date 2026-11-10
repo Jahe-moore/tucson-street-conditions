@@ -1,0 +1,66 @@
+table v_load_status
+
+	column layer
+		dataType: string
+		summarizeBy: none
+		sourceColumn: layer
+
+	column mode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: mode
+
+	column started_at
+		dataType: dateTime
+		formatString: mmm d, yyyy h:mm AM/PM
+		summarizeBy: none
+		sourceColumn: started_at
+
+	column finished_at
+		dataType: dateTime
+		formatString: mmm d, yyyy h:mm AM/PM
+		summarizeBy: none
+		sourceColumn: finished_at
+
+	column status
+		dataType: string
+		summarizeBy: none
+		sourceColumn: status
+
+	column rows_read
+		dataType: int64
+		formatString: #,0
+		summarizeBy: none
+		sourceColumn: rows_read
+
+	column rows_inserted
+		dataType: int64
+		formatString: #,0
+		summarizeBy: none
+		sourceColumn: rows_inserted
+
+	column rows_updated
+		dataType: int64
+		formatString: #,0
+		summarizeBy: none
+		sourceColumn: rows_updated
+
+	column rows_unchanged
+		dataType: int64
+		formatString: #,0
+		summarizeBy: none
+		sourceColumn: rows_unchanged
+
+	column error_message
+		dataType: string
+		summarizeBy: none
+		sourceColumn: error_message
+
+	partition v_load_status = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database("localhost\SQLEXPRESS", "TucsonStreets"),
+				    Data = Source{[Schema="rpt",Item="v_load_status"]}[Data]
+				in
+				    Data

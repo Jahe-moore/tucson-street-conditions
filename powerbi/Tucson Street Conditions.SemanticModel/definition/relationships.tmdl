@@ -1,0 +1,11 @@
+relationship fact_ward
+	fromColumn: fact_segment.ward_id
+	toColumn: dim_ward.ward_id
+
+relationship fact_band
+	fromColumn: fact_segment.band_id
+	toColumn: dim_condition_band.band_id
+
+relationship worst_ward
+	fromColumn: v_worst_first.ward_id
+	toColumn: dim_ward.ward_id

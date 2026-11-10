@@ -101,6 +101,12 @@
   ul.plain { padding-left: 1.1rem; font-size: 0.93rem; }
   ul.plain li { margin-bottom: 0.35rem; }
   .table-scroll { overflow-x: auto; }
+  .shots { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 1rem; }
+  .shots figure { margin: 0; }
+  .shots figure.wide { grid-column: 1 / -1; }
+  .shots img { width: 100%; height: auto; display: block; border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 8px 30px rgba(15,29,54,0.10); }
+  .shots figcaption { font-size: 0.88rem; margin-top: 0.5rem; }
+  .shots figcaption b { font-family: 'League Spartan', sans-serif; color: var(--navy); }
   footer { background: var(--navy-dark); color: rgba(255,255,255,0.75); padding: 1.4rem 0; font-family: 'League Spartan', sans-serif; font-size: 0.85rem; }
   footer a { color: #fff; }
 
@@ -126,6 +132,7 @@
     <ul class="navbar-links">
       <li><a href="#why">Why</a></li>
       <li><a href="#how">How it works</a></li>
+      <li><a href="#see">Report and map</a></li>
       <li><a href="#data">What the data says</a></li>
       <li><a href="#access">Who sees what</a></li>
       <li><a href="#docs">Analyst work</a></li>
@@ -139,7 +146,8 @@
     <h1>Which streets are worst, and who gets to see what?</h1>
     <p class="lead">Tucson publishes a condition score for every street it maintains. I built the system a city IT team would run on it: a script that pulls the data on a nightly schedule, a SQL Server database that checks it, and a Power BI report where each council office sees only its own ward.</p>
     <div class="hero-actions">
-      <a class="btn btn-primary" href="#data">See what the data says</a>
+      <a class="btn btn-primary" href="map.html">Open the street map</a>
+      <a class="btn btn-secondary" href="#see">See the report</a>
       <a class="btn btn-secondary" href="https://github.com/Jahe-moore/tucson-street-conditions">Read the code</a>
     </div>
     <div class="facts">
@@ -185,6 +193,26 @@
       <div class="link"><div class="card"><span class="step">5. Report</span>
         <span class="tool">Power BI</span><span class="tool">ArcGIS</span>
         <p>A ward scorecard, the worst-first list and a data health page, limited by ward. A map colored by condition.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="see">
+  <div class="wrap">
+    <span class="kicker">The report and the map</span>
+    <h2>What a council office or engineer actually opens.</h2>
+    <p>The Power BI report reads the database's reporting views. The map reads the city's own ArcGIS layers live, styled with the same condition bands.</p>
+    <div class="shots">
+      <figure class="wide"><a href="img/report-scorecard.jpg"><img src="img/report-scorecard.jpg" width="1252" height="762" loading="lazy" alt="Power BI ward scorecard: average condition 68.1, 36.9% of pavement poor or worse, 1,837 miles, 4,540 segments inspected over 3 years ago, 302 under a dig moratorium, plus average condition and condition mix by ward."></a>
+        <figcaption><b>Ward scorecard.</b> Headline numbers, each ward's average condition weighted by pavement area, and how much of each ward's pavement sits in each condition band.</figcaption></figure>
+      <figure><a href="img/report-worst.jpg"><img src="img/report-worst.jpg" width="1252" height="762" loading="lazy" alt="Power BI worst-first page: a table of the lowest-scoring street segments by ward, excluding streets under a dig moratorium, and a bar chart of failed or serious segments by ward."></a>
+        <figcaption><b>Worst first.</b> The lowest-scoring city streets, skipping ones just repaved, ranked within each ward.</figcaption></figure>
+      <figure><a href="img/report-health.jpg"><img src="img/report-health.jpg" width="1252" height="762" loading="lazy" alt="Power BI data health page: the ten quality checks from the last load, the last load of each layer, and a chart of when segments were last inspected, showing the 2020 survey of neighborhood streets."></a>
+        <figcaption><b>Data health.</b> Every quality check from the last load, whether each layer loaded, and when streets were last inspected.</figcaption></figure>
+      <figure><a href="map.html"><img src="img/map-city.jpg" width="1440" height="860" loading="lazy" alt="Map of Tucson's major streets colored by condition, with the six ward boundaries."></a>
+        <figcaption><b>The street map.</b> Every major street colored by condition, with ward boundaries. <a href="map.html">Open it</a>.</figcaption></figure>
+      <figure><a href="map.html"><img src="img/map-ward3.jpg" width="1440" height="860" loading="lazy" alt="Map zoomed to Ward 3 showing neighborhood streets by condition and a pop-up for N Columbus Bl: condition 8 out of 100, near E Fort Lowell Rd, last inspected July 2024."></a>
+        <figcaption><b>One ward, one street.</b> Pick a ward to zoom in; click a street for its score, cross streets and last inspection.</figcaption></figure>
     </div>
   </div>
 </section>

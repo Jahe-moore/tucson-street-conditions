@@ -1,0 +1,55 @@
+table v_worst_first
+
+	column rank_in_ward
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: rank_in_ward
+
+	column ward_id
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: ward_id
+		isHidden
+
+	column cartegraph_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: cartegraph_id
+
+	column street_class
+		dataType: string
+		summarizeBy: none
+		sourceColumn: street_class
+
+	column segment_label
+		dataType: string
+		summarizeBy: none
+		sourceColumn: segment_label
+
+	column oci
+		dataType: double
+		formatString: 0.0
+		summarizeBy: none
+		sourceColumn: oci
+
+	column area_sqft
+		dataType: double
+		formatString: #,0
+		summarizeBy: none
+		sourceColumn: area_sqft
+
+	column inspection_date
+		dataType: dateTime
+		formatString: mmm yyyy
+		summarizeBy: none
+		sourceColumn: inspection_date
+
+	partition v_worst_first = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database("localhost\SQLEXPRESS", "TucsonStreets"),
+				    Data = Source{[Schema="rpt",Item="v_worst_first"]}[Data]
+				in
+				    Data

@@ -12,7 +12,7 @@ BEGIN
 
     /* the load itself */
     INSERT @r SELECT 'row_count_drop', 'error', COUNT(*),
-        'A layer returned under 90% of its previous successful row count (partial download?)'
+        'Full load under 90% of the last one (partial download?)'
     FROM etl.run_log cur
     CROSS APPLY (SELECT TOP 1 rows_read FROM etl.run_log p
                  WHERE p.layer = cur.layer AND p.status = 'success' AND p.mode = 'full' AND p.run_id < cur.run_id
@@ -37,7 +37,7 @@ BEGIN
     FROM core.street_segment WHERE removed_from_source = 0 AND ward_raw LIKE 'BOS%';
 
     INSERT @r SELECT 'inspection_over_3_years', 'warn', COUNT(*), 'Last inspection more than 3 years ago'
-    FROM core.street_segment WHERE removed_from_source = 0 AND inspection_date < DATEADD(year, -3, @today);
+    FROM core.street_segment WHERE removed_from_source = 0 AND DATEDIFF(day, inspection_date, @today) / 365.25 > 3;
 
     INSERT @r SELECT 'no_inspection_date', 'warn', COUNT(*), 'Segment has no inspection date'
     FROM core.street_segment WHERE removed_from_source = 0 AND inspection_date IS NULL;

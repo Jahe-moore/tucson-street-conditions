@@ -1,0 +1,23 @@
+table user_ward
+	isHidden
+
+	column user_name
+		dataType: string
+		summarizeBy: none
+		sourceColumn: user_name
+		isHidden
+
+	column ward_id
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: ward_id
+		isHidden
+
+	partition user_ward = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database("localhost\SQLEXPRESS", "TucsonStreets"),
+				    Data = Source{[Schema="rpt",Item="user_ward"]}[Data]
+				in
+				    Data

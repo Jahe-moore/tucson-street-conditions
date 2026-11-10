@@ -1,0 +1,105 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "health_tbl_q",
+  "position": {
+    "x": 24,
+    "y": 70,
+    "z": 0,
+    "width": 820,
+    "height": 320
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "drillFilterOtherVisuals": true,
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "v_quality"
+                    }
+                  },
+                  "Property": "check_name"
+                }
+              },
+              "queryRef": "v_quality.check_name",
+              "nativeQueryRef": "check_name",
+              "displayName": "Check"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "v_quality"
+                    }
+                  },
+                  "Property": "severity"
+                }
+              },
+              "queryRef": "v_quality.severity",
+              "nativeQueryRef": "severity",
+              "displayName": "Severity"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "v_quality"
+                    }
+                  },
+                  "Property": "row_count"
+                }
+              },
+              "queryRef": "v_quality.row_count",
+              "nativeQueryRef": "row_count",
+              "displayName": "Rows"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "v_quality"
+                    }
+                  },
+                  "Property": "detail"
+                }
+              },
+              "queryRef": "v_quality.detail",
+              "nativeQueryRef": "detail",
+              "displayName": "What it means"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Quality checks from the last load'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

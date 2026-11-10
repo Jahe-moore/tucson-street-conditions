@@ -1,0 +1,4 @@
+role 'Ward 3'
+	modelPermission: read
+
+	tablePermission dim_ward = [ward_id] = 3

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tucson Street Map</title>
+<meta name="description" content="Every Tucson street segment colored by its condition score, live from the City of Tucson's ArcGIS layers.">
+<meta name="author" content="Jake Moore">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;600;700&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css">
+<link rel="stylesheet" href="base.css">
+<style>
+  html, body { height: 100%; margin: 0; background: var(--white); }
+  body { display: flex; flex-direction: column; }
+  .navbar-links { margin-left: auto; }
+  .bar { display: flex; flex-wrap: wrap; gap: 0.6rem 1.2rem; align-items: center; padding: 0.6rem clamp(1rem, 3vw, 1.6rem);
+    border-bottom: 1px solid var(--border); font-family: 'League Spartan', sans-serif; font-size: 0.85rem; color: var(--navy); }
+  .bar label { font-weight: 700; }
+  .bar select { font: inherit; padding: 0.3rem 0.5rem; border: 1px solid var(--border); border-radius: 4px; background: var(--white); color: var(--navy); }
+  .bar .note { color: var(--text-muted); margin-left: auto; }
+  #map { flex: 1; min-height: 420px; }
+  .esri-popup__main-container { font-family: 'Libre Baskerville', serif; }
+  .esri-legend, .esri-popup__header-title { font-family: 'League Spartan', sans-serif; }
+  @media (max-width: 760px) { .navbar-links { display: none; } .bar .note { margin-left: 0; } }
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a class="navbar-brand" href="index.html">Tucson Street Conditions</a>
+    <ul class="navbar-links"><li><a href="index.html">Back to the project</a></li></ul>
+  </div>
+</nav>
+<div class="bar">
+  <label for="ward">Ward</label>
+  <select id="ward">
+    <option value="">All wards</option>
+    <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option>
+  </select>
+  <span>Click any street for its score, cross streets and last inspection.</span>
+  <span class="note">Live from City of Tucson GIS. Neighborhood streets appear as you zoom in.</span>
+</div>
+<div id="map" role="application" aria-label="Map of Tucson streets colored by condition"></div>
+
+<script src="https://js.arcgis.com/4.30/"></script>
+<script>
+require(["esri/Map", "esri/views/MapView", "esri/layers/FeatureLayer", "esri/layers/TileLayer", "esri/Basemap",
+         "esri/widgets/Legend", "esri/widgets/Expand"],
+function (Map, MapView, FeatureLayer, TileLayer, Basemap, Legend, Expand) {
+  // Same bands as the SQL table core.condition_band and the Power BI report (ASTM D6433 scale)
+  const bandExpr = `
+    var s = $feature.OCI;
+    if (IsEmpty(s)) { return "No score"; }
+    When(s < 25, "Failed or serious", s < 40, "Very poor", s < 55, "Poor",
+         s < 70, "Fair", s < 85, "Satisfactory", "Good");`;
+  const bands = [["Failed or serious", "#B91C1C"], ["Very poor", "#D4850A"], ["Poor", "#E8B64C"],
+                 ["Fair", "#9AA3AE"], ["Satisfactory", "#6FB08C"], ["Good", "#1A7A4A"], ["No score", "#D4D8DF"]];
+
+  function renderer(width) {
+    return {
+      type: "unique-value",
+      valueExpression: bandExpr,
+      valueExpressionTitle: "Condition (0 to 100)",
+      uniqueValueInfos: bands.map(([label, color]) => ({ value: label, label, symbol: { type: "simple-line", color, width } })),
+      orderByClassesEnabled: true
+    };
+  }
+
+  const popup = {
+    title: "{StreetName}",
+    expressionInfos: [
+      { name: "band", expression: bandExpr },
+      { name: "between", expression: `var a = $feature.RouteBack; var b = $feature.RouteAhead;
+          IIf(IsEmpty(a) && IsEmpty(b), "Not recorded", IIf(a == b || IsEmpty(b), "Near " + a, a + " to " + b))` },
+      { name: "inspected", expression: `var d = $feature.InspectionDate;
+          if (IsEmpty(d)) { return "No inspection date on file"; }
+          var yrs = Round(DateDiff(Now(), d, "years"), 1);
+          return Text(d, "MMM Y") + " (" + yrs + " years ago)" + IIf(yrs > 3, ". Due for re-inspection.", "");` }
+    ],
+    content: `<b>Condition:</b> {OCI} out of 100 ({expression/band})<br>
+              <b>Between:</b> {expression/between}<br>
+              <b>Last inspected:</b> {expression/inspected}<br>
+              <b>Ward:</b> {Ward}`,
+    fieldInfos: [{ fieldName: "OCI", format: { places: 0 } }]
+  };
+
+  const base = "https://services3.arcgis.com/9coHY2fvuFjG9HQX/arcgis/rest/services/";
+  const fields = ["StreetName", "OCI", "InspectionDate", "RouteBack", "RouteAhead", "Ward"];
+  const minor = new FeatureLayer({ url: base + "Pavement_Condition_Minor_Streets_HFL/FeatureServer/21", title: "Neighborhood streets",
+    renderer: renderer(1.2), popupTemplate: popup, outFields: fields, minScale: 80000 });
+  const major = new FeatureLayer({ url: base + "Pavement_Condition_Major_Streets_HFL/FeatureServer/20", title: "Major streets",
+    renderer: renderer(2.6), popupTemplate: popup, outFields: fields });
+  const wards = new FeatureLayer({ portalItem: { id: "025e8235c2ab4b09ba4e202d28cc2fc1" }, title: "Wards", legendEnabled: false, popupEnabled: false,
+    renderer: { type: "simple", symbol: { type: "simple-fill", color: [0, 0, 0, 0], outline: { color: "#1B2A4A", width: 1.6 } } },
+    labelingInfo: [{ labelExpressionInfo: { expression: '"Ward " + $feature.WARD' },
+      symbol: { type: "text", color: "#1B2A4A", haloColor: "white", haloSize: 2, font: { size: 12, weight: "bold", family: "sans-serif" } } }] });
+
+  const basemap = new Basemap({ baseLayers: [new TileLayer({ url: "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer" })] });
+  const map = new Map({ basemap, layers: [minor, major, wards] });
+  const view = new MapView({ container: "map", map, center: [-110.925, 32.2], zoom: 11, constraints: { minZoom: 9 } });
+
+  const legend = new Legend({ view, layerInfos: [{ layer: major, title: "Street condition" }] });
+  view.ui.add(new Expand({ view, content: legend, expanded: window.innerWidth > 760, expandTooltip: "Legend" }), "bottom-left");
+
+  window.streetMap = { view, major, minor, wards };
+  document.getElementById("ward").addEventListener("change", async (e) => {
+    const w = e.target.value;
+    const where = w ? `Ward = '${w}'` : "1=1";
+    major.definitionExpression = where; minor.definitionExpression = where;
+    wards.definitionExpression = w ? `WARD = '${w}'` : null;
+    if (w) {
+      const r = await wards.queryExtent({ where: `WARD = '${w}'` });
+      if (r.extent) view.goTo(r.extent.expand(1.15));
+    } else {
+      view.goTo({ center: [-110.925, 32.2], zoom: 11 });
+    }
+  });
+});
+</script>
+</body>
+</html>

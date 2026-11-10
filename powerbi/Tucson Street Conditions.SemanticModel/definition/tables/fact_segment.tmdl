@@ -1,0 +1,176 @@
+table fact_segment
+
+	measure 'Segments' = COUNTROWS ( fact_segment )
+		formatString: #,0
+
+	measure 'Miles' = SUM ( fact_segment[length_mi] )
+		formatString: #,0
+
+	measure 'Avg Condition' =
+			VAR scored = FILTER ( fact_segment, NOT ISBLANK ( fact_segment[oci] ) && NOT ISBLANK ( fact_segment[area_sqft] ) )
+			RETURN DIVIDE ( SUMX ( scored, fact_segment[oci] * fact_segment[area_sqft] ), SUMX ( scored, fact_segment[area_sqft] ) )
+		formatString: 0.0
+
+	measure '% Poor or Worse' =
+			VAR scoredArea = CALCULATE ( SUM ( fact_segment[area_sqft] ), NOT ISBLANK ( fact_segment[oci] ) )
+			VAR poorArea = CALCULATE ( SUM ( fact_segment[area_sqft] ), NOT ISBLANK ( fact_segment[oci] ) && fact_segment[oci] < 55 )
+			RETURN DIVIDE ( poorArea, scoredArea )
+		formatString: 0.0%
+
+	measure 'Inspected Over 3 Yrs Ago' = CALCULATE ( [Segments], fact_segment[inspection_age_yrs] > 3 ) + 0
+		formatString: #,0
+
+	measure 'No Score' = CALCULATE ( [Segments], ISBLANK ( fact_segment[oci] ) ) + 0
+		formatString: #,0
+
+	measure 'Under Moratorium' = CALCULATE ( [Segments], fact_segment[under_moratorium] = TRUE () ) + 0
+		formatString: #,0
+
+	measure 'Data As Of' = "Data loaded " & FORMAT ( MAX ( v_load_status[finished_at] ), "mmm d, yyyy h:mm AM/PM" )
+
+	measure 'Viewing As' =
+			VAR n = COUNTROWS ( ALL ( dim_ward ) )
+			VAR wards = CONCATENATEX ( FILTER ( ALL ( dim_ward ), dim_ward[ward_id] > 0 ), dim_ward[ward_name], ", ", dim_ward[ward_id] )
+			RETURN IF ( n >= 7, "Viewing: all wards", "Viewing: " & wards )
+
+	measure 'Scored Area' = CALCULATE ( SUM ( fact_segment[area_sqft] ), NOT ISBLANK ( fact_segment[oci] ) )
+		formatString: #,0
+
+	measure 'Failed Or Serious' = CALCULATE ( COUNTROWS ( v_worst_first ), v_worst_first[oci] < 25 ) + 0
+		formatString: #,0
+
+	measure 'Quality Issues' = CALCULATE ( SUM ( v_quality[row_count] ), v_quality[severity] IN { "error", "warn" } ) + 0
+		formatString: #,0
+
+	column cartegraph_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: cartegraph_id
+
+	column street_class
+		dataType: string
+		summarizeBy: none
+		sourceColumn: street_class
+
+	column street_name
+		dataType: string
+		summarizeBy: none
+		sourceColumn: street_name
+
+	column segment_label
+		dataType: string
+		summarizeBy: none
+		sourceColumn: segment_label
+
+	column segment_key_label
+		dataType: string
+		summarizeBy: none
+		sourceColumn: segment_key_label
+
+	column complexity
+		dataType: string
+		summarizeBy: none
+		sourceColumn: complexity
+
+	column jurisdiction
+		dataType: string
+		summarizeBy: none
+		sourceColumn: jurisdiction
+
+	column ward_id
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: ward_id
+		isHidden
+
+	column band_id
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: band_id
+		isHidden
+
+	column oci
+		dataType: double
+		formatString: 0.0
+		summarizeBy: none
+		sourceColumn: oci
+
+	column length_ft
+		dataType: double
+		formatString: #,0
+		summarizeBy: sum
+		sourceColumn: length_ft
+
+	column length_mi
+		dataType: double
+		formatString: #,0.0
+		summarizeBy: sum
+		sourceColumn: length_mi
+
+	column area_sqft
+		dataType: double
+		formatString: #,0
+		summarizeBy: sum
+		sourceColumn: area_sqft
+
+	column inspection_date
+		dataType: dateTime
+		formatString: mmm yyyy
+		summarizeBy: none
+		sourceColumn: inspection_date
+
+	column inspection_year
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: inspection_year
+
+	column inspection_age_yrs
+		dataType: double
+		summarizeBy: none
+		sourceColumn: inspection_age_yrs
+
+	column last_treated_date
+		dataType: dateTime
+		formatString: mmm yyyy
+		summarizeBy: none
+		sourceColumn: last_treated_date
+
+	column is_protected
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: is_protected
+
+	column moratorium_end_date
+		dataType: dateTime
+		formatString: mmm d, yyyy
+		summarizeBy: none
+		sourceColumn: moratorium_end_date
+
+	column under_moratorium
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: under_moratorium
+
+	column mid_lat
+		dataType: double
+		summarizeBy: none
+		sourceColumn: mid_lat
+		isHidden
+		dataCategory: Latitude
+
+	column mid_lon
+		dataType: double
+		summarizeBy: none
+		sourceColumn: mid_lon
+		isHidden
+		dataCategory: Longitude
+
+	partition fact_segment = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database("localhost\SQLEXPRESS", "TucsonStreets"),
+				    Data = Source{[Schema="rpt",Item="fact_segment"]}[Data]
+				in
+				    Data

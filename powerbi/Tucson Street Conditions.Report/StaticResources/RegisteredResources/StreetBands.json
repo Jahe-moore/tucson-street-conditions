@@ -1,0 +1,30 @@
+{
+  "name": "StreetBands",
+  "dataColors": [
+    "#1B2A4A",
+    "#5B7FA6",
+    "#7F1414",
+    "#B91C1C",
+    "#D4850A",
+    "#E8B64C",
+    "#9AA3AE",
+    "#6FB08C",
+    "#1A7A4A"
+  ],
+  "background": "#FFFFFF",
+  "foreground": "#2D2D2D",
+  "tableAccent": "#1B2A4A",
+  "textClasses": {
+    "title": {
+      "fontFace": "Segoe UI Semibold",
+      "color": "#1B2A4A",
+      "fontSize": 12
+    },
+    "callout": {
+      "color": "#1B2A4A"
+    },
+    "label": {
+      "color": "#2D2D2D"
+    }
+  }
+}
